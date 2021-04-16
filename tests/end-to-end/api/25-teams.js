@@ -1098,7 +1098,7 @@ describe('[Teams]', () => {
 	});
 
 	describe('/teams.update', () => {
-		let testTeam;
+		let testTeam; let testTeam2;
 		before('Create test team', (done) => {
 			const teamName = `test-team-name${ Date.now() }`;
 			request.post(api('teams.create'))
@@ -1109,6 +1109,20 @@ describe('[Teams]', () => {
 				})
 				.end((err, res) => {
 					testTeam = res.body.team;
+					done();
+				});
+		});
+
+		before('Create test team', (done) => {
+			const teamName2 = `test-team-name${ Date.now() }`;
+			request.post(api('teams.create'))
+				.set(credentials)
+				.send({
+					name: teamName2,
+					type: 0,
+				})
+				.end((err, res) => {
+					testTeam2 = res.body.team;
 					done();
 				});
 		});
@@ -1151,6 +1165,30 @@ describe('[Teams]', () => {
 			const infoResponse = await request.get(api('teams.info'))
 				.set(credentials)
 				.query({ teamId: testTeam._id });
+
+			expect(infoResponse.body).to.have.property('success', true);
+
+			const { teamInfo } = infoResponse.body;
+			expect(teamInfo).to.have.property('type', 1);
+		});
+
+		it('should update team name and type at once', async () => {
+			const testTeamName = `test-team-name-changed${ Date.now() }`;
+			const updateResponse = await request.post(api('teams.update'))
+				.set(credentials)
+				.send({
+					teamId: testTeam2._id,
+					data: {
+						name: testTeamName,
+						type: 1,
+					},
+				});
+
+			expect(updateResponse.body).to.have.property('success', true);
+
+			const infoResponse = await request.get(api('teams.info'))
+				.set(credentials)
+				.query({ teamId: testTeam2._id });
 
 			expect(infoResponse.body).to.have.property('success', true);
 
